@@ -62,19 +62,34 @@ export function createId() {
 
 /** One-time migration: replace the old combined template with the two split ones. */
 function migrateTemplates(templates: TaskTemplate[]): TaskTemplate[] {
-    const hasOld = templates.some((t) => t.id === 'uklid-bytovka');
-    const hasNew = templates.some((t) => t.id === 'uklid-koupelna');
-    if (!hasOld || hasNew) {
-        return templates;
+    let migrated = templates;
+
+    const hasOld = migrated.some((template) => template.id === 'uklid-bytovka');
+    const hasNew = migrated.some((template) => template.id === 'uklid-koupelna');
+    if (hasOld && !hasNew) {
+        const oldIndex = migrated.findIndex((template) => template.id === 'uklid-bytovka');
+        migrated = [...migrated];
+        migrated.splice(
+            oldIndex,
+            1,
+            { id: 'uklid-koupelna', title: 'Uklidit koupelnu', category: 'uklid', isActive: true, sortOrder: 80 },
+            { id: 'uklid-zachod', title: 'Uklidit záchod', category: 'uklid', isActive: true, sortOrder: 85 },
+        );
     }
-    const oldIndex = templates.findIndex((t) => t.id === 'uklid-bytovka');
-    const migrated = [...templates];
-    migrated.splice(
-        oldIndex,
-        1,
-        { id: 'uklid-koupelna', title: 'Uklidit koupelnu', category: 'uklid', isActive: true, sortOrder: 80 },
-        { id: 'uklid-zachod', title: 'Uklidit záchod', category: 'uklid', isActive: true, sortOrder: 85 },
-    );
-    writeJson(templatesKey, migrated);
-    return migrated;
+
+    const existingIds = new Set(migrated.map((template) => template.id));
+    const missingDefaults = defaultTemplates.filter((template) => !existingIds.has(template.id));
+    if (missingDefaults.length === 0) {
+        if (migrated !== templates) {
+            const sortedMigrated = [...migrated].sort((left, right) => left.sortOrder - right.sortOrder);
+            writeJson(templatesKey, sortedMigrated);
+            return sortedMigrated;
+        }
+
+        return migrated;
+    }
+
+    const merged = [...migrated, ...missingDefaults].sort((left, right) => left.sortOrder - right.sortOrder);
+    writeJson(templatesKey, merged);
+    return merged;
 }
