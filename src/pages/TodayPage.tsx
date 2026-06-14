@@ -12,8 +12,10 @@ interface TodayPageProps {
     onDeleteEntry: (id: string) => void;
     activeActor: Person;
     onActiveActorChange: (actor: Person) => void;
+    storageMode: 'local' | 'shared';
     lastLoadedAt: string;
     onReloadState: () => void;
+    onMigrateLocalEntries?: (() => void) | undefined;
     savedMessage: string | null;
 }
 
@@ -64,8 +66,10 @@ export function TodayPage({
     onDeleteEntry,
     activeActor,
     onActiveActorChange,
+    storageMode,
     lastLoadedAt,
     onReloadState,
+    onMigrateLocalEntries,
     savedMessage,
 }: TodayPageProps) {
     const [activeCategory, setActiveCategory] = useState<CategoryId | null>(null);
@@ -165,11 +169,22 @@ export function TodayPage({
                     ))}
                 </div>
                 <div className="local-state-row">
-                    <div>Data jsou zatím uložená jen v tomto zařízení.</div>
+                    <div>
+                        {storageMode === 'shared'
+                            ? 'Data se sdílí mezi přihlášenými členy domácnosti.'
+                            : 'Data jsou zatím uložená jen v tomto zařízení.'}
+                    </div>
                     <div>Naposledy načteno: {lastLoadedLabel}</div>
-                    <button className="button button--ghost button--small" type="button" onClick={onReloadState}>
-                        Obnovit stav
-                    </button>
+                    <div className="local-state-row__actions">
+                        <button className="button button--ghost button--small" type="button" onClick={onReloadState}>
+                            Obnovit stav
+                        </button>
+                        {storageMode === 'shared' && onMigrateLocalEntries ? (
+                            <button className="button button--ghost button--small" type="button" onClick={onMigrateLocalEntries}>
+                                Přenést lokální záznamy do sdílené databáze
+                            </button>
+                        ) : null}
+                    </div>
                 </div>
             </SectionCard>
 

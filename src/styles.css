@@ -136,6 +136,16 @@ textarea {
     color: var(--muted);
 }
 
+.app-header__session {
+    margin-top: 0.8rem;
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
 .app-main {
     max-width: 980px;
     margin: 0 auto;
@@ -211,6 +221,36 @@ textarea {
     gap: 0.4rem;
     color: var(--muted);
     font-size: 0.94rem;
+}
+
+.local-state-row__actions {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+
+.login-card {
+    max-width: 520px;
+    margin: 2.5rem auto 0;
+    background: #fff3a6;
+}
+
+.login-form {
+    margin-top: 0.95rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.login-form label {
+    display: grid;
+    gap: 0.35rem;
+    color: var(--muted);
+}
+
+.login-error {
+    margin: 0;
+    color: #8f2600;
+    font-weight: 600;
 }
 
 .category-tabs {
@@ -321,6 +361,11 @@ textarea {
 
 .button:active {
     background: #b49b00;
+}
+
+.button:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
 }
 
 .button--ghost {
@@ -490,7 +535,7 @@ textarea {
     min-width: 0;
 }
 
-.summary-line__toggle-label > span:first-child {
+.summary-line__toggle-label>span:first-child {
     font-weight: 700;
 }
 
