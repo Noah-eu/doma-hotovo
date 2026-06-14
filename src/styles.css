@@ -159,7 +159,7 @@ textarea {
     min-width: 0;
 }
 
-.section-card__header > * {
+.section-card__header>* {
     min-width: 0;
 }
 
@@ -376,8 +376,8 @@ textarea {
     min-width: 0;
 }
 
-.mini-entry__line > :first-child,
-.entry-card__top > :first-child {
+.mini-entry__line> :first-child,
+.entry-card__top> :first-child {
     min-width: 0;
     flex: 1 1 0;
     overflow: hidden;
@@ -567,6 +567,7 @@ textarea {
 }
 
 @media (max-width: 720px) {
+
     .form-grid,
     .summary-kpis,
     .template-row__main {
