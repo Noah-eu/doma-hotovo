@@ -21,3 +21,11 @@
 Poznámka:
 - `householdId` musí sedět s `VITE_FIREBASE_HOUSEHOLD_ID`.
 - Firebase Hosting se nepoužívá, aplikace zůstává nasazená na Netlify.
+
+## Instalace na mobil (PWA)
+
+1. Otevři nasazenou aplikaci v mobilním prohlížeči.
+2. Na Androidu v Chrome otevři menu a zvol `Přidat na plochu` (nebo `Nainstalovat aplikaci`).
+3. Spusť aplikaci z ikony na ploše.
+
+Po prvním přihlášení zůstává uživatel přihlášený i po zavření aplikace, refreshi a znovuotevření. Odhlášení proběhne pouze přes tlačítko `Odhlásit`.

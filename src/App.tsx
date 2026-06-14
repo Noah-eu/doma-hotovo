@@ -287,6 +287,7 @@ function App() {
                 <div className="app-header__copy">
                     <h1>Doma hotovo</h1>
                     <p>Malý domácí deník toho, co kdo udělal.</p>
+                    <p className="install-hint">Pro instalaci na mobil otevři menu prohlížeče a zvol Přidat na plochu.</p>
                     {isSharedMode ? (
                         <div className="app-header__session">
                             <span>{authUser?.email}</span>

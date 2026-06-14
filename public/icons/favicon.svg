@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Doma hotovo ikona</title>
+  <desc id="desc">Minimalisticky mop na sytě žlutém pozadí.</desc>
+  <rect x="0" y="0" width="128" height="128" rx="28" fill="#f1cc00" />
+  <rect x="57" y="18" width="14" height="58" rx="7" fill="#6d5400" />
+  <rect x="36" y="70" width="56" height="15" rx="7" fill="#6d5400" />
+  <path d="M30 86h68l-8 24H38z" fill="#f7e38b" stroke="#6d5400" stroke-width="5" stroke-linejoin="round" />
+  <path d="M42 96h44M39 104h50M36 112h56" stroke="#6d5400" stroke-width="4" stroke-linecap="round" />
+</svg>

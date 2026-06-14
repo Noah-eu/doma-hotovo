@@ -1,12 +1,28 @@
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth';
+import { browserLocalPersistence, onAuthStateChanged, setPersistence, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth';
 import { firebaseAuth, isFirebaseConfigured } from './firebaseApp';
 
 export type FirebaseUser = User;
+
+let persistenceReady: Promise<void> | null = null;
+
+function ensurePersistence() {
+    if (!firebaseAuth) {
+        return Promise.resolve();
+    }
+
+    if (!persistenceReady) {
+        persistenceReady = setPersistence(firebaseAuth, browserLocalPersistence);
+    }
+
+    return persistenceReady;
+}
 
 export function subscribeAuth(onChange: (user: User | null) => void, onError?: (error: Error) => void) {
     if (!firebaseAuth) {
         return () => undefined;
     }
+
+    void ensurePersistence();
 
     return onAuthStateChanged(
         firebaseAuth,
@@ -22,6 +38,7 @@ export async function signInWithCredentials(email: string, password: string) {
         throw new Error('Firebase není nakonfigurovaný.');
     }
 
+    await ensurePersistence();
     return signInWithEmailAndPassword(firebaseAuth, email.trim(), password);
 }
 
