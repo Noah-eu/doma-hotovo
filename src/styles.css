@@ -639,6 +639,20 @@ textarea {
     flex-wrap: wrap;
 }
 
+.calendar-day-actions {
+    margin-bottom: 0.8rem;
+}
+
+.calendar-add-panel {
+    margin-bottom: 0.9rem;
+    padding: 0.85rem;
+    border-radius: 16px;
+    border: 1px solid rgba(125, 106, 10, 0.28);
+    background: #fff3a6;
+    display: grid;
+    gap: 0.8rem;
+}
+
 .template-row__main {
     display: grid;
     gap: 0.75rem;

@@ -316,7 +316,16 @@ function App() {
                     />
                 ) : null}
                 {activeTab === 'summary' ? <SummaryPage entries={orderedEntries} /> : null}
-                {activeTab === 'calendar' ? <CalendarPage entries={orderedEntries} onDeleteEntry={deleteEntry} /> : null}
+                {activeTab === 'calendar' ? (
+                    <CalendarPage
+                        entries={orderedEntries}
+                        onAddEntry={addEntry}
+                        onDeleteEntry={deleteEntry}
+                        activeActor={activeActor}
+                        onActiveActorChange={setActiveActor}
+                        savedMessage={savedMessage}
+                    />
+                ) : null}
                 {activeTab === 'admin' ? <AdminPage templates={templates} onUpdateTemplates={handleUpdateTemplates} /> : null}
             </main>
 

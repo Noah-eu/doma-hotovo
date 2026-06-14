@@ -1,18 +1,71 @@
 import { useMemo, useState } from 'react';
 import { SectionCard } from '../components/SectionCard';
-import type { WorkEntry } from '../types';
+import type { CategoryId, Condition, Duration, Necessity, Person, WorkEntry } from '../types';
 import { actorLabel, byCategoryLabel } from '../utils/summary';
 import { formatMonthTitle, getMonthGrid, isCurrentMonthDay, isSameDay, toIsoDateKey } from '../utils/date';
 import { formatDateTime } from '../utils/date';
 
 interface CalendarPageProps {
     entries: WorkEntry[];
+    onAddEntry: (payload: Omit<WorkEntry, 'id' | 'createdAt'>) => void;
     onDeleteEntry: (id: string) => void;
+    activeActor: Person;
+    onActiveActorChange: (actor: Person) => void;
+    savedMessage: string | null;
 }
 
-export function CalendarPage({ entries, onDeleteEntry }: CalendarPageProps) {
+const people: Array<{ value: Person; label: string }> = [
+    { value: 'david', label: 'David' },
+    { value: 'martina', label: 'Martina' },
+    { value: 'both', label: 'Společně' },
+];
+
+const categories: Array<{ value: CategoryId; label: string }> = [
+    { value: 'pes', label: 'Pes' },
+    { value: 'odpad', label: 'Odpad' },
+    { value: 'uklid', label: 'Úklid' },
+    { value: 'pradlo', label: 'Prádlo' },
+    { value: 'jidlo-a-vareni', label: 'Jídlo a vaření' },
+    { value: 'nakupy', label: 'Nákupy' },
+    { value: 'deti', label: 'Děti' },
+    { value: 'opravy', label: 'Opravy' },
+    { value: 'udrzba-spotrebicu', label: 'Údržba spotřebičů' },
+    { value: 'finance-a-platby', label: 'Finance a platby' },
+    { value: 'urady-a-administrativa', label: 'Úřady a administrativa' },
+    { value: 'auto', label: 'Auto' },
+    { value: 'ostatni', label: 'Ostatní' },
+];
+
+const durations = ['5 min', '15 min', '30 min', '60+ min'] as const;
+
+const conditions: Array<{ value: Condition; label: string }> = [
+    { value: 'běžné', label: 'běžné' },
+    { value: 'nepříjemné', label: 'nepříjemné' },
+    { value: 'déšť/zima/brzo ráno', label: 'déšť/zima/brzo ráno' },
+    { value: 'náročné', label: 'náročné' },
+];
+
+const necessities: Array<{ value: Necessity; label: string }> = [
+    { value: 'nutné', label: 'nutné' },
+    { value: 'dohodnuté', label: 'dohodnuté' },
+    { value: 'dobrovolné', label: 'dobrovolné' },
+    { value: 'není společně potvrzené', label: 'není společně potvrzené' },
+];
+
+const forWhomOptions = ['společná domácnost', 'děti Martiny', 'Evička', 'všechny děti', 'pes', 'David', 'Martina', 'všichni'];
+
+export function CalendarPage({ entries, onAddEntry, onDeleteEntry, activeActor, onActiveActorChange, savedMessage }: CalendarPageProps) {
     const [anchorDate, setAnchorDate] = useState(new Date());
     const [selectedDay, setSelectedDay] = useState(toIsoDateKey(new Date()));
+    const [isAddingEntry, setIsAddingEntry] = useState(false);
+    const [title, setTitle] = useState('');
+    const [category, setCategory] = useState<CategoryId>('ostatni');
+    const [forWhom, setForWhom] = useState<'' | string>('');
+    const [duration, setDuration] = useState<'' | Duration>('');
+    const [condition, setCondition] = useState<'' | Condition>('');
+    const [necessity, setNecessity] = useState<'' | Necessity>('');
+    const [note, setNote] = useState('');
+    const [showDetails, setShowDetails] = useState(false);
 
     const monthGrid = useMemo(() => getMonthGrid(anchorDate), [anchorDate]);
     const selectedEntries = entries.filter((entry) => isSameDay(entry.date, selectedDay));
@@ -24,6 +77,44 @@ export function CalendarPage({ entries, onDeleteEntry }: CalendarPageProps) {
         }
         return map;
     }, [entries]);
+
+    function resetAddForm() {
+        setTitle('');
+        setCategory('ostatni');
+        setForWhom('');
+        setDuration('');
+        setCondition('');
+        setNecessity('');
+        setNote('');
+        setShowDetails(false);
+    }
+
+    function closeAddForm() {
+        setIsAddingEntry(false);
+        resetAddForm();
+    }
+
+    function submitEntryForSelectedDay() {
+        const finalTitle = title.trim();
+        if (!finalTitle) {
+            return;
+        }
+
+        onAddEntry({
+            title: finalTitle,
+            actor: activeActor,
+            category,
+            date: new Date(`${selectedDay}T12:00:00`).toISOString(),
+            forWhom: forWhom || undefined,
+            duration: duration || undefined,
+            condition: condition || undefined,
+            necessity: necessity || undefined,
+            note: note.trim() || undefined,
+            source: 'custom',
+        });
+
+        closeAddForm();
+    }
 
     return (
         <div className="page-stack">
@@ -73,6 +164,115 @@ export function CalendarPage({ entries, onDeleteEntry }: CalendarPageProps) {
             </SectionCard>
 
             <SectionCard title="Záznamy vybraného dne" subtitle={selectedDay}>
+                <div className="calendar-day-actions">
+                    {!isAddingEntry ? (
+                        <button className="button" type="button" onClick={() => setIsAddingEntry(true)}>
+                            Přidat záznam k tomuto dni
+                        </button>
+                    ) : null}
+                </div>
+
+                {isAddingEntry ? (
+                    <div className="calendar-add-panel">
+                        <div className="form-grid">
+                            <label>
+                                Co jsi udělal/a?
+                                <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Např. vynesl odpad" />
+                            </label>
+                            <label>
+                                Kdo to udělal
+                                <select value={activeActor} onChange={(event) => onActiveActorChange(event.target.value as Person)}>
+                                    {people.map((person) => (
+                                        <option key={person.value} value={person.value}>
+                                            {person.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label>
+                                Kategorie
+                                <select value={category} onChange={(event) => setCategory(event.target.value as CategoryId)}>
+                                    {categories.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label>
+                                Datum
+                                <input type="date" value={selectedDay} readOnly />
+                            </label>
+                            <div className="form-actions">
+                                <button className="button" type="button" onClick={submitEntryForSelectedDay}>
+                                    Uložit
+                                </button>
+                                <button className="button button--ghost" type="button" onClick={closeAddForm}>
+                                    Zrušit
+                                </button>
+                                <button className="button button--ghost" type="button" onClick={() => setShowDetails((current) => !current)}>
+                                    {showDetails ? 'Skrýt detaily' : 'Rozbalit detaily'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {showDetails ? (
+                            <div className="form-grid form-grid--details">
+                                <label>
+                                    Pro koho
+                                    <select value={forWhom} onChange={(event) => setForWhom(event.target.value)}>
+                                        <option value="">Bez výběru</option>
+                                        {forWhomOptions.map((option) => (
+                                            <option key={option} value={option}>
+                                                {option}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label>
+                                    Časová náročnost
+                                    <select value={duration} onChange={(event) => setDuration(event.target.value as '' | Duration)}>
+                                        <option value="">Bez výběru</option>
+                                        {durations.map((option) => (
+                                            <option key={option} value={option}>
+                                                {option}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label>
+                                    Podmínky
+                                    <select value={condition} onChange={(event) => setCondition(event.target.value as '' | Condition)}>
+                                        <option value="">Bez výběru</option>
+                                        {conditions.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label>
+                                    Nutnost
+                                    <select value={necessity} onChange={(event) => setNecessity(event.target.value as '' | Necessity)}>
+                                        <option value="">Bez výběru</option>
+                                        {necessities.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label className="span-2">
+                                    Poznámka
+                                    <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={3} placeholder="Doplňující poznámka" />
+                                </label>
+                            </div>
+                        ) : null}
+                    </div>
+                ) : null}
+
+                {savedMessage ? <div className="saved-banner">{savedMessage}</div> : null}
+
                 <div className="today-group__list">
                     {selectedEntries.length === 0 ? <p className="empty-state">Na tento den zatím nic není.</p> : null}
                     {selectedEntries.map((entry) => (
