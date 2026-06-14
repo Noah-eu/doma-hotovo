@@ -10,13 +10,17 @@ interface TodayPageProps {
     templates: TaskTemplate[];
     onAddEntry: (payload: Omit<WorkEntry, 'id' | 'createdAt'>) => void;
     onDeleteEntry: (id: string) => void;
+    activeActor: Person;
+    onActiveActorChange: (actor: Person) => void;
+    lastLoadedAt: string;
+    onReloadState: () => void;
     savedMessage: string | null;
 }
 
 const people: Array<{ value: Person; label: string }> = [
     { value: 'david', label: 'David' },
     { value: 'martina', label: 'Martina' },
-    { value: 'both', label: 'Oba' },
+    { value: 'both', label: 'Společně' },
 ];
 
 const categories: Array<{ value: CategoryId; label: string }> = [
@@ -53,8 +57,17 @@ const necessities: Array<{ value: Necessity; label: string }> = [
 
 const forWhomOptions = ['společná domácnost', 'děti Martiny', 'Evička', 'všechny děti', 'pes', 'David', 'Martina', 'všichni'];
 
-export function TodayPage({ entries, templates, onAddEntry, onDeleteEntry, savedMessage }: TodayPageProps) {
-    const [actor, setActor] = useState<Person>('david');
+export function TodayPage({
+    entries,
+    templates,
+    onAddEntry,
+    onDeleteEntry,
+    activeActor,
+    onActiveActorChange,
+    lastLoadedAt,
+    onReloadState,
+    savedMessage,
+}: TodayPageProps) {
     const [activeCategory, setActiveCategory] = useState<CategoryId | null>(null);
     const [category, setCategory] = useState<CategoryId>('ostatni');
     const [title, setTitle] = useState('');
@@ -65,6 +78,15 @@ export function TodayPage({ entries, templates, onAddEntry, onDeleteEntry, saved
     const [necessity, setNecessity] = useState<'' | Necessity>('');
     const [note, setNote] = useState('');
     const [showDetails, setShowDetails] = useState(false);
+
+    const lastLoadedLabel = useMemo(
+        () =>
+            new Date(lastLoadedAt).toLocaleTimeString('cs-CZ', {
+                hour: '2-digit',
+                minute: '2-digit',
+            }),
+        [lastLoadedAt],
+    );
 
     const todaysEntries = useMemo(
         () => entries.filter((entry) => entry.date.slice(0, 10) === date),
@@ -82,17 +104,10 @@ export function TodayPage({ entries, templates, onAddEntry, onDeleteEntry, saved
 
     const activeTemplates = templates.filter((template) => template.isActive).sort((left, right) => left.sortOrder - right.sortOrder);
 
-    // Which categories have at least one active template?
-    const availableCategories = useMemo(
-        () =>
-            categories.filter((cat) =>
-                activeTemplates.some((t) => t.category === cat.value),
-            ),
-        [activeTemplates],
-    );
+    const availableCategories = categories;
 
     // Initialise the first available category once templates are known
-    const resolvedActiveCategory = activeCategory ?? availableCategories[0]?.value ?? null;
+    const resolvedActiveCategory = activeCategory ?? categories[0]?.value ?? null;
 
     const filteredTemplates = useMemo(
         () =>
@@ -121,7 +136,7 @@ export function TodayPage({ entries, templates, onAddEntry, onDeleteEntry, saved
 
         onAddEntry({
             title: finalTitle,
-            actor,
+            actor: activeActor,
             category: source === 'template' ? templateCategory ?? category : category,
             date: new Date(`${date}T12:00:00`).toISOString(),
             forWhom: forWhom || undefined,
@@ -136,6 +151,28 @@ export function TodayPage({ entries, templates, onAddEntry, onDeleteEntry, saved
 
     return (
         <div className="page-stack">
+            <SectionCard title="Zapisuje" subtitle="Vyber, kdo právě zapisuje úkoly.">
+                <div className="actor-switch" role="group" aria-label="Zapisuje">
+                    {people.map((person) => (
+                        <button
+                            key={person.value}
+                            type="button"
+                            className={activeActor === person.value ? 'actor-chip actor-chip--active' : 'actor-chip'}
+                            onClick={() => onActiveActorChange(person.value)}
+                        >
+                            {person.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="local-state-row">
+                    <div>Data jsou zatím uložená jen v tomto zařízení.</div>
+                    <div>Naposledy načteno: {lastLoadedLabel}</div>
+                    <button className="button button--ghost button--small" type="button" onClick={onReloadState}>
+                        Obnovit stav
+                    </button>
+                </div>
+            </SectionCard>
+
             <SectionCard title="Rychlé šablony" subtitle="Vyber sekci a pak tapni na úkol.">
                 {/* Category selector */}
                 <div className="category-tabs">
@@ -164,6 +201,7 @@ export function TodayPage({ entries, templates, onAddEntry, onDeleteEntry, saved
                         />
                     ))}
                 </div>
+                {filteredTemplates.length === 0 ? <p className="empty-state">V této sekci zatím nejsou aktivní šablony.</p> : null}
             </SectionCard>
 
             <SectionCard title="Rychlý vlastní záznam" subtitle="Stačí text, kdo to udělal a kategorie. Detaily jsou volitelné.">
@@ -174,7 +212,7 @@ export function TodayPage({ entries, templates, onAddEntry, onDeleteEntry, saved
                     </label>
                     <label>
                         Kdo to udělal
-                        <select value={actor} onChange={(event) => setActor(event.target.value as Person)}>
+                        <select value={activeActor} onChange={(event) => onActiveActorChange(event.target.value as Person)}>
                             {people.map((person) => (
                                 <option key={person.value} value={person.value}>
                                     {person.label}

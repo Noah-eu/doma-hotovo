@@ -1,8 +1,9 @@
 import { defaultTemplates } from '../data/defaultTemplates';
-import type { TaskTemplate, WorkEntry } from '../types';
+import type { Person, TaskTemplate, WorkEntry } from '../types';
 
 const entriesKey = 'domaHotovo.entries';
 const templatesKey = 'domaHotovo.templates';
+const activeActorKey = 'domaHotovo.activeActor';
 
 function readJson<T>(key: string): T | null {
     const raw = localStorage.getItem(key);
@@ -41,6 +42,18 @@ export function loadTemplates(): TaskTemplate[] {
 
 export function saveTemplates(templates: TaskTemplate[]) {
     writeJson(templatesKey, templates);
+}
+
+export function loadActiveActor(): Person {
+    const stored = readJson<string>(activeActorKey);
+    if (stored === 'david' || stored === 'martina' || stored === 'both') {
+        return stored;
+    }
+    return 'david';
+}
+
+export function saveActiveActor(actor: Person) {
+    writeJson(activeActorKey, actor);
 }
 
 export function createId() {
