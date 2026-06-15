@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import { SectionCard } from '../components/SectionCard';
 import type { WorkEntry } from '../types';
-import { actorLabel, byCategoryLabel, getInvisibleWork, getMainAreas, summarizeBuckets } from '../utils/summary';
-import { monthlyEntries, weeklyEntries } from '../utils/summary';
-import { formatDateTime } from '../utils/date';
+import { actorLabel, byCategoryLabel, dailyEntries, getInvisibleWork, getMainAreas, summarizeBuckets } from '../utils/summary';
+import { formatDateTime, toDateInputValue } from '../utils/date';
 
 interface SummaryPageProps {
     entries: WorkEntry[];
@@ -11,19 +10,22 @@ interface SummaryPageProps {
 
 export function SummaryPage({ entries }: SummaryPageProps) {
     const [expandedActor, setExpandedActor] = useState<'david' | 'martina' | 'both' | null>(null);
-    const now = new Date();
-    const weekEntries = weeklyEntries(entries, now);
-    const monthEntries = monthlyEntries(entries, now);
-    const buckets = summarizeBuckets(monthEntries);
-    const invisible = getInvisibleWork(monthEntries);
-    const mainAreas = getMainAreas(monthEntries).slice(0, 5);
+    const todayDate = new Date();
+    const todayKey = toDateInputValue(todayDate);
+    const todayEntries = dailyEntries(entries, todayKey);
+    const buckets = summarizeBuckets(todayEntries);
+    const invisible = getInvisibleWork(todayEntries);
+    const mainAreas = getMainAreas(todayEntries).slice(0, 5);
+    const todayLabel = new Intl.DateTimeFormat('cs-CZ', {
+        dateStyle: 'long',
+    }).format(todayDate);
     const entriesByActor = useMemo(
         () => ({
-            david: monthEntries.filter((entry) => entry.actor === 'david'),
-            martina: monthEntries.filter((entry) => entry.actor === 'martina'),
-            both: monthEntries.filter((entry) => entry.actor === 'both'),
+            david: todayEntries.filter((entry) => entry.actor === 'david'),
+            martina: todayEntries.filter((entry) => entry.actor === 'martina'),
+            both: todayEntries.filter((entry) => entry.actor === 'both'),
         }),
-        [monthEntries],
+        [todayEntries],
     );
 
     function toggleActor(actor: 'david' | 'martina' | 'both') {
@@ -53,20 +55,20 @@ export function SummaryPage({ entries }: SummaryPageProps) {
 
     return (
         <div className="page-stack">
-            <SectionCard title="Tento týden" subtitle="Kolik záznamů vzniklo bez jakéhokoli skóre.">
+            <SectionCard title="Dnešní přehled" subtitle={`Co je dnes hotovo. ${todayLabel}`}>
                 <div className="summary-kpis">
                     <div className="kpi">
-                        <strong>{weekEntries.length}</strong>
+                        <strong>{todayEntries.length}</strong>
                         <span>záznamů</span>
                     </div>
                     <div className="kpi">
-                        <strong>{monthEntries.length}</strong>
-                        <span>tento měsíc</span>
+                        <strong>{buckets.filter((bucket) => bucket.total > 0).length}</strong>
+                        <span>aktivní lidé dnes</span>
                     </div>
                 </div>
             </SectionCard>
 
-            <SectionCard title="Hlavní oblasti práce" subtitle="Co se doma opakuje nejčastěji.">
+            <SectionCard title="Hlavní oblasti práce" subtitle="Dnešní kategorie a detaily podle člověka.">
                 <div className="summary-lines">
                     {buckets.map((bucket) => (
                         <article key={bucket.actor} className="summary-line summary-line--interactive">
@@ -92,7 +94,7 @@ export function SummaryPage({ entries }: SummaryPageProps) {
                                         .slice(0, 3)
                                         .map((item) => `${byCategoryLabel(item.category)} (${item.count})`)
                                         .join(', ')
-                                    : 'zatím bez záznamu'}
+                                    : 'dnes zatím bez záznamu'}
                             </p>
 
                             {expandedActor === bucket.actor ? (
@@ -100,7 +102,7 @@ export function SummaryPage({ entries }: SummaryPageProps) {
                                     {entriesByActor[bucket.actor].length > 0 ? (
                                         entriesByActor[bucket.actor].map((entry) => renderEntryDetails(entry))
                                     ) : (
-                                        <p className="empty-state">zatím bez záznamu</p>
+                                        <p className="empty-state">dnes zatím bez záznamu</p>
                                     )}
                                 </div>
                             ) : null}
@@ -113,13 +115,13 @@ export function SummaryPage({ entries }: SummaryPageProps) {
                                 ? mainAreas
                                     .map((item) => `${byCategoryLabel(item.category)} (${item.count})`)
                                     .join(', ')
-                                : 'zatím bez záznamu'}
+                                : 'dnes zatím bez záznamu'}
                         </p>
                     </article>
                 </div>
             </SectionCard>
 
-            <SectionCard title="Neviditelná práce" subtitle="Kategorie, které bývají snadno přehlédnuté.">
+            <SectionCard title="Neviditelná práce" subtitle="Dnešní snadno přehlédnuté činnosti.">
                 <div className="chip-row chip-row--wrap">
                     {invisible.length > 0 ? (
                         invisible.map((entry) => (
@@ -128,7 +130,7 @@ export function SummaryPage({ entries }: SummaryPageProps) {
                             </span>
                         ))
                     ) : (
-                        <p className="empty-state">Zatím žádné záznamy v této oblasti.</p>
+                        <p className="empty-state">dnes zatím bez záznamu</p>
                     )}
                 </div>
             </SectionCard>

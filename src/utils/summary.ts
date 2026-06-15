@@ -64,6 +64,10 @@ export function monthlyEntries(entries: WorkEntry[], anchorDate: Date) {
     return filterEntriesByRange(entries, start, end);
 }
 
+export function dailyEntries(entries: WorkEntry[], dayIsoDate: string) {
+    return entries.filter((entry) => entry.date.slice(0, 10) === dayIsoDate);
+}
+
 export function byCategoryLabel(category: CategoryId) {
     const labels: Record<CategoryId, string> = {
         pes: 'Pes',
