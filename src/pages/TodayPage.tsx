@@ -3,7 +3,7 @@ import { TemplatePill } from '../components/TemplatePill';
 import { SectionCard } from '../components/SectionCard';
 import type { CategoryId, Condition, Duration, Necessity, Person, TaskTemplate, WorkEntry } from '../types';
 import { actorLabel, byCategoryLabel, categoryColor } from '../utils/summary';
-import { formatDateTime, toDateInputValue } from '../utils/date';
+import { createEntryDateForLocalDate, dateKeyFromEntryDate, formatDateTime, getTodayDateKey } from '../utils/date';
 
 interface TodayPageProps {
     entries: WorkEntry[];
@@ -75,13 +75,14 @@ export function TodayPage({
     const [activeCategory, setActiveCategory] = useState<CategoryId | null>(null);
     const [category, setCategory] = useState<CategoryId>('ostatni');
     const [title, setTitle] = useState('');
-    const [date, setDate] = useState(toDateInputValue(new Date()));
+    const [date, setDate] = useState(getTodayDateKey());
     const [forWhom, setForWhom] = useState<'' | string>('');
     const [duration, setDuration] = useState<'' | Duration>('');
     const [condition, setCondition] = useState<'' | Condition>('');
     const [necessity, setNecessity] = useState<'' | Necessity>('');
     const [note, setNote] = useState('');
     const [showDetails, setShowDetails] = useState(false);
+    const todayDateKey = getTodayDateKey();
 
     const lastLoadedLabel = useMemo(
         () =>
@@ -93,8 +94,8 @@ export function TodayPage({
     );
 
     const todaysEntries = useMemo(
-        () => entries.filter((entry) => entry.date.slice(0, 10) === date),
-        [date, entries],
+        () => entries.filter((entry) => dateKeyFromEntryDate(entry.date) === todayDateKey),
+        [entries, todayDateKey],
     );
 
     const groupedEntries = useMemo(
@@ -142,7 +143,7 @@ export function TodayPage({
             title: finalTitle,
             actor: activeActor,
             category: source === 'template' ? templateCategory ?? category : category,
-            date: new Date(`${date}T12:00:00`).toISOString(),
+            date: createEntryDateForLocalDate(date),
             forWhom: forWhom || undefined,
             duration: duration || undefined,
             condition: condition || undefined,

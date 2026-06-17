@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { SectionCard } from '../components/SectionCard';
 import type { WorkEntry } from '../types';
 import { actorLabel, byCategoryLabel, dailyEntries, getInvisibleWork, getMainAreas, summarizeBuckets } from '../utils/summary';
-import { formatDateTime, toDateInputValue } from '../utils/date';
+import { formatDateTime, getTodayDateKey } from '../utils/date';
 
 interface SummaryPageProps {
     entries: WorkEntry[];
@@ -11,7 +11,7 @@ interface SummaryPageProps {
 export function SummaryPage({ entries }: SummaryPageProps) {
     const [expandedActor, setExpandedActor] = useState<'david' | 'martina' | 'both' | null>(null);
     const todayDate = new Date();
-    const todayKey = toDateInputValue(todayDate);
+    const todayKey = getTodayDateKey();
     const todayEntries = dailyEntries(entries, todayKey);
     const buckets = summarizeBuckets(todayEntries);
     const invisible = getInvisibleWork(todayEntries);

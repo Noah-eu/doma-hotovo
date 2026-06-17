@@ -2,7 +2,15 @@ import { useMemo, useState } from 'react';
 import { SectionCard } from '../components/SectionCard';
 import type { CategoryId, Condition, Duration, Necessity, Person, WorkEntry } from '../types';
 import { actorLabel, byCategoryLabel } from '../utils/summary';
-import { formatMonthTitle, getMonthGrid, isCurrentMonthDay, isSameDay, toIsoDateKey } from '../utils/date';
+import {
+    createEntryDateForLocalDate,
+    dateKeyFromEntryDate,
+    formatMonthTitle,
+    getMonthGrid,
+    getTodayDateKey,
+    isCurrentMonthDay,
+    toLocalDateKey,
+} from '../utils/date';
 import { formatDateTime } from '../utils/date';
 
 interface CalendarPageProps {
@@ -56,7 +64,7 @@ const forWhomOptions = ['společná domácnost', 'děti Martiny', 'Evička', 'v�
 
 export function CalendarPage({ entries, onAddEntry, onDeleteEntry, activeActor, onActiveActorChange, savedMessage }: CalendarPageProps) {
     const [anchorDate, setAnchorDate] = useState(new Date());
-    const [selectedDay, setSelectedDay] = useState(toIsoDateKey(new Date()));
+    const [selectedDateKey, setSelectedDateKey] = useState(getTodayDateKey());
     const [isAddingEntry, setIsAddingEntry] = useState(false);
     const [title, setTitle] = useState('');
     const [category, setCategory] = useState<CategoryId>('ostatni');
@@ -66,13 +74,18 @@ export function CalendarPage({ entries, onAddEntry, onDeleteEntry, activeActor, 
     const [necessity, setNecessity] = useState<'' | Necessity>('');
     const [note, setNote] = useState('');
     const [showDetails, setShowDetails] = useState(false);
+    const todayDateKey = getTodayDateKey();
 
     const monthGrid = useMemo(() => getMonthGrid(anchorDate), [anchorDate]);
-    const selectedEntries = entries.filter((entry) => isSameDay(entry.date, selectedDay));
+    const selectedEntries = useMemo(
+        () => entries.filter((entry) => dateKeyFromEntryDate(entry.date) === selectedDateKey),
+        [entries, selectedDateKey],
+    );
+
     const countByDay = useMemo(() => {
         const map = new Map<string, number>();
         for (const entry of entries) {
-            const key = entry.date.slice(0, 10);
+            const key = dateKeyFromEntryDate(entry.date);
             map.set(key, (map.get(key) ?? 0) + 1);
         }
         return map;
@@ -104,7 +117,7 @@ export function CalendarPage({ entries, onAddEntry, onDeleteEntry, activeActor, 
             title: finalTitle,
             actor: activeActor,
             category,
-            date: new Date(`${selectedDay}T12:00:00`).toISOString(),
+            date: createEntryDateForLocalDate(selectedDateKey),
             forWhom: forWhom || undefined,
             duration: duration || undefined,
             condition: condition || undefined,
@@ -126,7 +139,14 @@ export function CalendarPage({ entries, onAddEntry, onDeleteEntry, activeActor, 
                         <button className="button button--ghost button--small" type="button" onClick={() => setAnchorDate(new Date(anchorDate.getFullYear(), anchorDate.getMonth() - 1, 1))}>
                             Předchozí
                         </button>
-                        <button className="button button--ghost button--small" type="button" onClick={() => setAnchorDate(new Date())}>
+                        <button
+                            className="button button--ghost button--small"
+                            type="button"
+                            onClick={() => {
+                                setAnchorDate(new Date());
+                                setSelectedDateKey(getTodayDateKey());
+                            }}
+                        >
                             Dnes
                         </button>
                         <button className="button button--ghost button--small" type="button" onClick={() => setAnchorDate(new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 1))}>
@@ -142,16 +162,27 @@ export function CalendarPage({ entries, onAddEntry, onDeleteEntry, activeActor, 
                 </div>
                 <div className="calendar-grid">
                     {monthGrid.map((day) => {
-                        const key = toIsoDateKey(day);
-                        const count = countByDay.get(key) ?? 0;
+                        const dateKey = toLocalDateKey(day);
+                        const count = countByDay.get(dateKey) ?? 0;
                         const current = isCurrentMonthDay(day, anchorDate);
+                        const isSelected = dateKey === selectedDateKey;
+                        const isToday = dateKey === todayDateKey;
+                        const classes = [
+                            'calendar-day',
+                            current ? '' : 'calendar-day--muted',
+                            isToday ? 'calendar-day--today' : '',
+                            isSelected ? 'calendar-day--active' : '',
+                        ]
+                            .filter(Boolean)
+                            .join(' ');
+
                         return (
                             <button
-                                key={key}
+                                key={dateKey}
                                 type="button"
-                                className={current && key === selectedDay ? 'calendar-day calendar-day--active' : current ? 'calendar-day' : 'calendar-day calendar-day--muted'}
+                                className={classes}
                                 onClick={() => {
-                                    setSelectedDay(key);
+                                    setSelectedDateKey(dateKey);
                                     setAnchorDate(day);
                                 }}
                             >
@@ -163,7 +194,7 @@ export function CalendarPage({ entries, onAddEntry, onDeleteEntry, activeActor, 
                 </div>
             </SectionCard>
 
-            <SectionCard title="Záznamy vybraného dne" subtitle={selectedDay}>
+            <SectionCard title="Záznamy vybraného dne" subtitle={selectedDateKey}>
                 <div className="calendar-day-actions">
                     {!isAddingEntry ? (
                         <button className="button" type="button" onClick={() => setIsAddingEntry(true)}>
@@ -201,7 +232,7 @@ export function CalendarPage({ entries, onAddEntry, onDeleteEntry, activeActor, 
                             </label>
                             <label>
                                 Datum
-                                <input type="date" value={selectedDay} readOnly />
+                                <input type="date" value={selectedDateKey} readOnly />
                             </label>
                             <div className="form-actions">
                                 <button className="button" type="button" onClick={submitEntryForSelectedDay}>

@@ -1,9 +1,58 @@
+const dateKeyPattern = /^\d{4}-\d{2}-\d{2}$/;
+
+function padDatePart(value: number) {
+    return String(value).padStart(2, '0');
+}
+
+export function toLocalDateKey(date: Date) {
+    return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+}
+
+export function getTodayDateKey() {
+    return toLocalDateKey(new Date());
+}
+
+export function parseLocalDateKey(dateKey: string) {
+    if (!dateKeyPattern.test(dateKey)) {
+        return new Date(Number.NaN);
+    }
+
+    const parts = dateKey.split('-');
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    const day = Number(parts[2]);
+
+    return new Date(year, month - 1, day, 12, 0, 0, 0);
+}
+
+export function dateKeyFromEntryDate(entryDate: string) {
+    if (dateKeyPattern.test(entryDate)) {
+        return entryDate;
+    }
+
+    const parsed = new Date(entryDate);
+    if (Number.isNaN(parsed.getTime())) {
+        return entryDate.slice(0, 10);
+    }
+
+    return toLocalDateKey(parsed);
+}
+
+export function createEntryDateForLocalDate(dateKey: string) {
+    const localDate = parseLocalDateKey(dateKey);
+    if (Number.isNaN(localDate.getTime())) {
+        return new Date().toISOString();
+    }
+
+    return localDate.toISOString();
+}
+
 export function toDateInputValue(date: Date) {
-    return date.toISOString().slice(0, 10);
+    return toLocalDateKey(date);
 }
 
 export function isSameDay(a: string, b: string) {
-    return a.slice(0, 10) === b.slice(0, 10);
+    return dateKeyFromEntryDate(a) === dateKeyFromEntryDate(b);
 }
 
 export function startOfDay(date: Date) {
@@ -72,5 +121,5 @@ export function isCurrentMonthDay(day: Date, month: Date) {
 }
 
 export function toIsoDateKey(date: Date) {
-    return date.toISOString().slice(0, 10);
+    return toLocalDateKey(date);
 }

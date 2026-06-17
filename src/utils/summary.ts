@@ -1,5 +1,5 @@
 import type { CategoryId, Person, SummaryBucket, WorkEntry } from '../types';
-import { startOfMonth, startOfWeek } from './date';
+import { dateKeyFromEntryDate, startOfMonth, startOfWeek, toLocalDateKey } from './date';
 
 const invisibleCategories: CategoryId[] = [
     'opravy',
@@ -10,9 +10,13 @@ const invisibleCategories: CategoryId[] = [
 ];
 
 export function filterEntriesByRange(entries: WorkEntry[], start: Date, end: Date) {
-    const startIso = start.toISOString();
-    const endIso = end.toISOString();
-    return entries.filter((entry) => entry.date >= startIso && entry.date < endIso);
+    const startDateKey = toLocalDateKey(start);
+    const endDateKey = toLocalDateKey(end);
+
+    return entries.filter((entry) => {
+        const entryDateKey = dateKeyFromEntryDate(entry.date);
+        return entryDateKey >= startDateKey && entryDateKey < endDateKey;
+    });
 }
 
 export function summarizeByActor(entries: WorkEntry[], actor: Person) {
@@ -65,7 +69,7 @@ export function monthlyEntries(entries: WorkEntry[], anchorDate: Date) {
 }
 
 export function dailyEntries(entries: WorkEntry[], dayIsoDate: string) {
-    return entries.filter((entry) => entry.date.slice(0, 10) === dayIsoDate);
+    return entries.filter((entry) => dateKeyFromEntryDate(entry.date) === dayIsoDate);
 }
 
 export function byCategoryLabel(category: CategoryId) {
